@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dasbor Analisis IPO - PT Chandra Daya Investasi Tbk (CDIA)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Harmony Neutrals -->
+    <!-- Application Structure Plan: Menggunakan pendekatan dasbor dengan navigasi tab (Beranda, Profil, Keuangan, Valuasi). Struktur ini dipilih untuk memecah informasi kompleks menjadi bagian-bagian yang mudah dicerna. Pengguna dapat langsung melihat kesimpulan utama di Beranda, lalu mendalami aspek spesifik sesuai minat. Alur ini lebih intuitif daripada halaman panjang, memungkinkan eksplorasi non-linear dan fokus pada area kunci seperti analisis keuangan atau perbandingan valuasi. Interaksi utama adalah navigasi tab dan tooltip pada bagan untuk detail. -->
+    <!-- Visualization & Content Choices: 
+        - Ringkasan IPO (Beranda): Goal: Inform. Method: Kartu HTML/Tailwind. Interaction: Statis. Justification: Menyajikan data kunci dengan cepat.
+        - Kesenjangan Valuasi (Beranda): Goal: Compare. Method: Bagan batang horizontal (Chart.js). Interaction: Tooltip. Justification: Visualisasi langsung dari tesis 'overvalued'.
+        - Pilar Bisnis (Profil): Goal: Organize. Method: Grid HTML/Tailwind dengan ikon Unicode. Interaction: Hover. Justification: Memudahkan pemahaman model bisnis.
+        - Struktur Kepemilikan (Profil): Goal: Organize. Method: Diagram berbasis Flexbox. Interaction: Statis. Justification: Menjelaskan dukungan sponsor yang kuat.
+        - Pertumbuhan Keuangan (Keuangan): Goal: Change. Method: Bagan batang gabungan (Chart.js). Interaction: Tooltip & catatan penjelasan. Justification: Menampilkan pertumbuhan sambil memberikan konteks penting tentang distorsi laba.
+        - Penggunaan Dana (Keuangan): Goal: Proportions. Method: Bagan donat (Chart.js). Interaction: Tooltip. Justification: Menunjukkan alokasi dana IPO secara jelas.
+        - Tabel Peer (Valuasi): Goal: Compare. Method: Tabel HTML/Tailwind. Interaction: Statis. Justification: Perbandingan data metrik yang terstruktur.
+        - Analisis SWOT (Valuasi): Goal: Organize. Method: Grid 2x2 HTML/Tailwind. Interaction: Statis. Justification: Format standar dan efektif untuk ringkasan strategis.
+        - Library/Method: Chart.js untuk semua bagan di atas Canvas, HTML/Tailwind untuk tata letak dan elemen non-bagan.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FDFBF6;
+            color: #403F3E;
+        }
+        .nav-button {
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-button.active {
+            border-bottom-color: #6096BA;
+            color: #6096BA;
+            font-weight: 600;
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+        .card {
+            background-color: #FFFFFF;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            padding: 1.5rem;
+            transition: transform 0.2s ease-in-out;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 48rem;
+            margin-left: auto;
+            margin-right: auto;
+            height: 20rem; 
+        }
+        @media (min-width: 640px) {
+            .chart-container {
+                height: 22rem;
+            }
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-7xl">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl sm:text-4xl font-bold text-gray-800">Analisis IPO PT Chandra Daya Investasi Tbk (CDIA)</h1>
+            <p class="text-md text-gray-600 mt-2">Dasbor Interaktif untuk Memahami Peluang dan Risiko</p>
+        </header>
+
+        <nav class="flex justify-center border-b border-gray-200 mb-8">
+            <button data-tab="beranda" class="nav-button active px-4 py-2 text-sm sm:text-base">Beranda</button>
+            <button data-tab="profil" class="nav-button px-4 py-2 text-sm sm:text-base">Profil Perusahaan</button>
+            <button data-tab="keuangan" class="nav-button px-4 py-2 text-sm sm:text-base">Analisis Keuangan</button>
+            <button data-tab="valuasi" class="nav-button px-4 py-2 text-sm sm:text-base">Valuasi & Rekomendasi</button>
+        </nav>
+
+        <main>
+            <!-- Beranda / Summary -->
+            <section id="beranda" class="content-section active">
+                <div class="text-center mb-8">
+                    <h2 class="text-2xl font-bold text-gray-800">Ringkasan Eksekutif</h2>
+                    <p class="mt-2 text-gray-600 max-w-3xl mx-auto">Bagian ini menyajikan tesis investasi inti, kesimpulan valuasi, dan rekomendasi akhir untuk IPO CDIA. Dapatkan gambaran umum secara cepat sebelum mendalami detailnya.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="card md:col-span-2">
+                        <h3 class="font-bold text-xl mb-2 text-gray-800">Rekomendasi: <span class="text-amber-600">Berlangganan dengan Hati-Hati</span></h3>
+                        <p class="text-gray-700">Secara fundamental, saham ini dinilai <strong class="font-semibold">overvalued</strong> pada harga IPO. Namun, sentimen pasar yang kuat terkait "Premi Prajogo Pangestu" kemungkinan besar akan mendorong harga lebih tinggi dalam jangka pendek. Investor harus memahami bahwa mereka berinvestasi dalam narasi pertumbuhan, bukan nilai saat ini. Potensi kenaikan didorong oleh sentimen, bukan fundamental.</p>
+                        <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                            <p class="font-semibold text-blue-800">Target Harga 6 Bulan (Berbasis Sentimen): <span class="text-2xl">Rp220</span></p>
+                            <p class="text-sm text-blue-700">Potensi kenaikan 16%-29% dari harga IPO</p>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                         <h3 class="font-bold text-lg mb-4 text-gray-800 text-center">Detail Penawaran IPO</h3>
+                         <div class="space-y-3 text-sm">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Rentang Harga:</span>
+                                <span class="font-semibold text-gray-800 bg-gray-100 px-2 py-1 rounded">Rp170 - Rp190</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Target Dana:</span>
+                                <span class="font-semibold text-gray-800">~Rp2,37 Triliun</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Kapitalisasi Pasar:</span>
+                                <span class="font-semibold text-gray-800">~Rp23,72 Triliun</span>
+                            </div>
+                             <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Masa Penawaran Awal:</span>
+                                <span class="font-semibold text-gray-800">19-24 Juni 2025</span>
+                            </div>
+                         </div>
+                    </div>
+                     <div class="card">
+                        <h3 class="font-bold text-lg mb-2 text-gray-800 text-center">Kesenjangan Valuasi</h3>
+                         <p class="text-center text-xs text-gray-500 mb-2">Perbandingan antara harga penawaran IPO dengan nilai intrinsik (wajar) perusahaan hasil analisis.</p>
+                        <div class="chart-container h-48 sm:h-48">
+                            <canvas id="valuationGapChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Profil Perusahaan -->
+            <section id="profil" class="content-section">
+                <div class="text-center mb-8">
+                    <h2 class="text-2xl font-bold text-gray-800">Profil Perusahaan</h2>
+                    <p class="mt-2 text-gray-600 max-w-3xl mx-auto">Kenali model bisnis CDIA yang terintegrasi melalui empat pilar utama dan struktur kepemilikan yang menjadi penopang kekuatannya.</p>
+                </div>
+                <div class="card mb-6">
+                    <h3 class="font-bold text-xl text-center mb-4 text-gray-800">Empat Pilar Bisnis Terintegrasi</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-center">
+                        <div class="p-4 bg-gray-50 rounded-lg">
+                            <span class="text-4xl">⚡️</span>
+                            <h4 class="font-semibold mt-2">Energi</h4>
+                            <p class="text-xs text-gray-600 mt-1">Pemasok listrik melalui PLTGU 120 MW dan PLTS 2,2 MWp di Cilegon.</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg">
+                            <span class="text-4xl">🚢</span>
+                            <h4 class="font-semibold mt-2">Logistik</h4>
+                            <p class="text-xs text-gray-600 mt-1">Layanan perkapalan khusus muatan kimia dan gas dengan 7 kapal.</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg">
+                            <span class="text-4xl">🏗️</span>
+                            <h4 class="font-semibold mt-2">Kepelabuhanan</h4>
+                            <p class="text-xs text-gray-600 mt-1">Operator 2 dermaga dan 72 tangki penyimpanan berkapasitas 130.000 m³.</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-lg">
+                            <span class="text-4xl">💧</span>
+                            <h4 class="font-semibold mt-2">Air</h4>
+                            <p class="text-xs text-gray-600 mt-1">Pemasok air industri utama di Cilegon melalui fasilitas WTP.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                     <h3 class="font-bold text-xl text-center mb-4 text-gray-800">Struktur Sponsor & Kepemilikan</h3>
+                     <p class="text-center text-sm text-gray-600 max-w-2xl mx-auto mb-6">Kekuatan CDIA ditopang oleh dua sponsor besar: TPIA milik Prajogo Pangestu sebagai pengendali dan pasar captive, serta EGCO Group dari Thailand yang memberikan validasi teknis.</p>
+                    <div class="flex flex-col sm:flex-row justify-center items-center gap-4">
+                        <div class="text-center p-4 border-2 border-dashed border-blue-300 rounded-lg bg-blue-50">
+                            <p class="font-bold text-blue-800">PT Chandra Asri Pacific Tbk (TPIA)</p>
+                            <p class="text-sm text-blue-600">(Grup Prajogo Pangestu)</p>
+                            <p class="text-3xl font-bold text-blue-800 mt-2">60%</p>
+                        </div>
+                        <div class="text-2xl text-gray-500 font-light mx-4">&rarr;</div>
+                        <div class="text-center p-6 bg-gray-800 text-white rounded-lg shadow-lg">
+                            <p class="font-bold text-xl">PT Chandra Daya Investasi Tbk (CDIA)</p>
+                            <p class="text-sm">Anak Usaha Strategis</p>
+                        </div>
+                         <div class="text-2xl text-gray-500 font-light mx-4">&larr;</div>
+                        <div class="text-center p-4 border-2 border-dashed border-green-300 rounded-lg bg-green-50">
+                            <p class="font-bold text-green-800">Phoenix Power B.V.</p>
+                            <p class="text-sm text-green-600">(EGCO Group, Thailand)</p>
+                            <p class="text-3xl font-bold text-green-800 mt-2">30%</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Analisis Keuangan -->
+            <section id="keuangan" class="content-section">
+                <div class="text-center mb-8">
+                    <h2 class="text-2xl font-bold text-gray-800">Analisis Keuangan</h2>
+                    <p class="mt-2 text-gray-600 max-w-3xl mx-auto">Visualisasi kinerja keuangan CDIA, menyoroti pertumbuhan pendapatan, lonjakan laba bersih yang perlu dicermati, serta alokasi dana hasil IPO.</p>
+                </div>
+                 <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                    <div class="lg:col-span-3 card">
+                        <h3 class="text-lg font-semibold text-center text-gray-800">Pertumbuhan Pendapatan & Laba Bersih (USD Juta)</h3>
+                        <div class="chart-container">
+                            <canvas id="financialsChart"></canvas>
+                        </div>
+                        <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800">
+                           <strong class="font-bold">Penting:</strong> Lonjakan Laba Bersih 2024 sebesar <strong>+1632%</strong> sebagian besar didorong oleh keuntungan non-operasional (bukan dari bisnis inti), sehingga tidak mencerminkan kinerja berkelanjutan. Laba Usaha inti hanya USD 2,2 juta.
+                        </div>
+                    </div>
+                    <div class="lg:col-span-2 card flex flex-col">
+                        <h3 class="text-lg font-semibold text-center text-gray-800 mb-4">Alokasi Dana IPO (~Rp2,37 T)</h3>
+                        <p class="text-center text-xs text-gray-500 mb-4">100% dana dialokasikan untuk belanja modal yang berorientasi pada pertumbuhan.</p>
+                        <div class="chart-container flex-grow">
+                             <canvas id="proceedsChart"></canvas>
+                        </div>
+                        <div class="mt-4 space-y-2 text-sm">
+                            <p><span class="inline-block w-3 h-3 rounded-full bg-sky-500 mr-2"></span><strong class="font-semibold">63.3%</strong> ke Pilar Kepelabuhanan & Penyimpanan</p>
+                            <p><span class="inline-block w-3 h-3 rounded-full bg-teal-500 mr-2"></span><strong class="font-semibold">36.7%</strong> ke Pilar Logistik</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Valuasi & Rekomendasi -->
+            <section id="valuasi" class="content-section">
+                 <div class="text-center mb-8">
+                    <h2 class="text-2xl font-bold text-gray-800">Valuasi & Rekomendasi</h2>
+                    <p class="mt-2 text-gray-600 max-w-3xl mx-auto">Bagian ini membedah valuasi CDIA dibandingkan perusahaan sejenis, menyajikan analisis SWOT, dan memberikan rekomendasi strategis bagi tipe investor yang berbeda.</p>
+                </div>
+
+                <div class="card mb-6">
+                    <h3 class="text-xl font-bold text-center mb-4 text-gray-800">Perbandingan dengan Perusahaan Sejenis (Peers)</h3>
+                    <p class="text-center text-sm text-gray-600 max-w-3xl mx-auto mb-4">Valuasi CDIA pada harga IPO menunjukkan premi yang signifikan dibandingkan mayoritas perusahaan sejenis di sektor energi, logistik, dan jasa pelabuhan.</p>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-gray-100 text-gray-700 uppercase text-xs">
+                                <tr>
+                                    <th class="px-4 py-2">Metrik</th>
+                                    <th class="px-4 py-2 text-center bg-blue-100 text-blue-800">CDIA (IPO)</th>
+                                    <th class="px-4 py-2 text-center">Peers Energi (POWR)</th>
+                                    <th class="px-4 py-2 text-center">Peers Logistik (AKRA)</th>
+                                    <th class="px-4 py-2 text-center">Peers Pelabuhan (IPCM)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b">
+                                    <td class="px-4 py-2 font-medium">Rasio P/E (TTM)</td>
+                                    <td class="px-4 py-2 text-center font-bold bg-blue-50">~42.5x (Terdistorsi)</td>
+                                    <td class="px-4 py-2 text-center">9.3x</td>
+                                    <td class="px-4 py-2 text-center">11.7x</td>
+                                    <td class="px-4 py-2 text-center">~35x</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="px-4 py-2 font-medium">Rasio P/B</td>
+                                    <td class="px-4 py-2 text-center font-bold bg-blue-50">~2.0x</td>
+                                    <td class="px-4 py-2 text-center">0.9x</td>
+                                    <td class="px-4 py-2 text-center">2.1x</td>
+                                    <td class="px-4 py-2 text-center">1.2x</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2 font-medium">ROE (%)</td>
+                                    <td class="px-4 py-2 text-center font-bold bg-blue-50">4.37%</td>
+                                    <td class="px-4 py-2 text-center">~10%</td>
+                                    <td class="px-4 py-2 text-center">~19%</td>
+                                    <td class="px-4 py-2 text-center">~13%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card">
+                     <h3 class="text-xl font-bold text-center mb-4 text-gray-800">Analisis SWOT</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-4 bg-green-50 rounded-lg border border-green-200">
+                            <h4 class="font-bold text-green-800">Kekuatan (Strengths)</h4>
+                            <ul class="list-disc list-inside mt-2 text-sm text-green-700 space-y-1">
+                                <li>Model bisnis terintegrasi</li>
+                                <li>Sponsor kuat (TPIA & EGCO)</li>
+                                <li>Pasar captive dengan TPIA</li>
+                                <li>Lokasi aset strategis</li>
+                            </ul>
+                        </div>
+                         <div class="p-4 bg-red-50 rounded-lg border border-red-200">
+                            <h4 class="font-bold text-red-800">Kelemahan (Weaknesses)</h4>
+                            <ul class="list-disc list-inside mt-2 text-sm text-red-700 space-y-1">
+                                <li>Ketergantungan pada pelanggan utama</li>
+                                <li>Profitabilitas bisnis inti masih rendah</li>
+                                <li>Rekam jejak terkonsolidasi terbatas</li>
+                            </ul>
+                        </div>
+                         <div class="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                            <h4 class="font-bold text-blue-800">Peluang (Opportunities)</h4>
+                            <ul class="list-disc list-inside mt-2 text-sm text-blue-700 space-y-1">
+                                <li>Pertumbuhan industri & infrastruktur RI</li>
+                                <li>Transisi ke energi bersih (gas, EBT)</li>
+                                <li>Potensi ekspansi regional</li>
+                            </ul>
+                        </div>
+                         <div class="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                            <h4 class="font-bold text-yellow-800">Ancaman (Threats)</h4>
+                            <ul class="list-disc list-inside mt-2 text-sm text-yellow-700 space-y-1">
+                                <li>Perlambatan ekonomi makro</li>
+                                <li>Risiko perubahan regulasi energi</li>
+                                <li>Fluktuasi suku bunga & kurs</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const tabs = document.querySelectorAll('.nav-button');
+            const sections = document.querySelectorAll('.content-section');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const target = tab.getAttribute('data-tab');
+
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+
+                    sections.forEach(section => {
+                        section.classList.remove('active');
+                        if (section.id === target) {
+                            section.classList.add('active');
+                        }
+                    });
+                });
+            });
+            
+            Chart.defaults.font.family = "'Inter', sans-serif";
+
+            function createValuationGapChart() {
+                const ctx = document.getElementById('valuationGapChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Nilai Wajar (Intrinsic)', 'Harga IPO'],
+                        datasets: [{
+                            label: 'Batas Bawah (Rp)',
+                            data: [125, 170],
+                            backgroundColor: 'rgba(96, 150, 186, 0.7)',
+                            borderColor: 'rgba(96, 150, 186, 1)',
+                            borderWidth: 1,
+                            stack: 'Stack 0',
+                        }, {
+                            label: 'Batas Atas (Rp)',
+                            data: [25, 20], 
+                            backgroundColor: 'rgba(163, 177, 138, 0.7)',
+                            borderColor: 'rgba(163, 177, 138, 1)',
+                            borderWidth: 1,
+                            stack: 'Stack 0',
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        if (context.dataset.label === 'Batas Bawah (Rp)') {
+                                            return `Batas Bawah: Rp ${context.raw}`;
+                                        }
+                                        const total = context.chart.data.datasets[0].data[context.dataIndex] + context.raw;
+                                        return `Batas Atas: Rp ${total}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                stacked: true,
+                                title: { display: true, text: 'Harga per Saham (Rp)' }
+                            },
+                            y: { stacked: true, grid: { display: false } }
+                        }
+                    }
+                });
+            }
+            
+            function createFinancialsChart() {
+                const ctx = document.getElementById('financialsChart').getContext('2d');
+                 new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['2023', '2024'],
+                        datasets: [
+                            {
+                                label: 'Pendapatan',
+                                data: [75.8, 102.3],
+                                backgroundColor: '#6096BA',
+                                yAxisID: 'y',
+                            },
+                            {
+                                label: 'Laba Bersih',
+                                data: [1.89, 32.69],
+                                backgroundColor: '#A3B18A',
+                                yAxisID: 'y',
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'top' },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                type: 'linear',
+                                display: true,
+                                position: 'left',
+                                title: {
+                                    display: true,
+                                    text: 'USD Juta'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function createProceedsChart() {
+                const ctx = document.getElementById('proceedsChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Kepelabuhanan & Penyimpanan', 'Logistik'],
+                        datasets: [{
+                            data: [1500, 871.8],
+                            backgroundColor: ['#38bdf8', '#2dd4bf'],
+                            borderColor: ['#0284c7', '#0d9488'],
+                            borderWidth: 2,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                             tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed !== null) {
+                                            label += `~Rp ${context.raw} Miliar`;
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            createValuationGapChart();
+            createFinancialsChart();
+            createProceedsChart();
+        });
+    </script>
+</body>
+</html>
